@@ -97,6 +97,7 @@ class Plugin extends \MapasCulturais\Plugin
             $data[$number][] = $this->getAgent($item);
         }
 
+        $_eval_users_id = [];
         foreach($data as $number => $valuers) {
             /** @var Registration $registration */
             $registration = $app->repo('Registration')->findOneBy(['opportunity' => $opportunity, 'number' => $number]);
@@ -105,15 +106,26 @@ class Plugin extends \MapasCulturais\Plugin
 
             $conn = $app->em->getConnection();
             $users = $conn->fetchFirstColumn("SELECT user_id FROM agent WHERE id in ($ids)");
-
+            
+            foreach($users as $usr){
+                $_eval_users_id[] = $usr;
+            }
+         
             $registration->valuersExcludeList = [];
             $registration->valuersIncludeList = array_map(function($item) { return "$item"; }, $users);
+            
             $registration->save(true);
+            $registration->__skipQueuingPCacheRecreation = true;
 
             $app->log->debug("Definindo avaliadores para a inscrição $number: $ids");
 
             $app->em->clear();
         }
+
+        $_eval_users_id = array_unique($_eval_users_id);
+
+        $users = $app->repo('User')->findBy(['id' => $_eval_users_id]);
+        $opportunity->enqueueToPCacheRecreation($users);
     }
 
     public function getSpreadsheetData($spreadsheet)
