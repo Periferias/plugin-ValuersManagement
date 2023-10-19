@@ -3,7 +3,10 @@
 namespace ValuersManagement;
 
 use MapasCulturais\App;
+use MapasCulturais\Controllers\Opportunity as ControllersOpportunity;
 use MapasCulturais\Definitions\FileGroup;
+use MapasCulturais\Entities\Opportunity;
+use MapasCulturais\Entities\Registration;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class Plugin extends \MapasCulturais\Plugin
@@ -22,12 +25,21 @@ class Plugin extends \MapasCulturais\Plugin
 
         $self = $this;
 
-        $app->hook(" template(opportunity.edit.add-entity-evaluator-committee):after", function () {
+        $app->hook("template(opportunity.edit.committee):end", function () {
             $entity = $this->controller->requestedEntity;
             $this->part('evalmaster--upload', ['entity' => $entity]);
         });
 
-        $app->hook('GET(opportunity.valuersmanagement)', function () use ($self) {
+        $app->hook('GET(opportunity.valuersmanagement)', function () use ($self, $app) {
+            /** @var ControllersOpportunity $this */
+            $this->requireAuthentication();
+            $opportunity = $app->repo('Opportunity')->find($this->data['entity']);
+            if(!$opportunity) {
+                $app->pass();
+            }
+
+            $opportunity->checkPermission('@control');
+
             $request = $this->data;
             $self->valuersmanagement($request);
         });
@@ -40,52 +52,68 @@ class Plugin extends \MapasCulturais\Plugin
         if ($file = $app->repo("File")->find($request['file'])) {
             $spreadsheet = IOFactory::load($file->getPath());
             $data = $this->getSpreadsheetData($spreadsheet);
-            $this->buildList($data);
+            $this->buildList($data, $file->owner);
+            
+            $file = $app->repo("File")->find($request['file']);
+            $file->delete(true);
         }
+
+        echo "<script>window.history.back();</script>";
+        die;
     }
 
-    public function buildList($values)
-    {
-
-        $result = [];
-        $action = null;
-        $clear = [];
-        foreach ($values as $value) {
-            $action = $this->getAction($value);
-            $registration = $value['REGISTRATION'];
-
-            if ($action == "clear") {
-                $clear[] = $registration;
+    function getNumber($item) {
+        $k = null;
+        foreach($item as $key => $value) {
+            if(in_array(mb_strtolower($key), ['inscrição', 'inscricao', 'number', 'número'])) {
+                $k = $key;
+                break;
             }
         }
 
-        $result['CLEAR'] = $clear;
-
-        foreach ($values as $value) {
-            $action = $this->getAction($value);
-            $agent = $value['AGENTE'];
-            $registration = $value['REGISTRATION'];
-
-            if (in_array($registration, $clear)) {
-                continue;
-            }
-
-            if ($action == "include") {
-                $result[$registration]['INCLUDE'][] = $agent;
-            }
-
-            if ($action == "exclude") {
-                $result[$registration]['EXCLUDE'][] = $agent;
-            }
-        }
-
-
-        return $result;
+        return $item[$k];
     }
 
-    public function getAction($value)
-    {
-        return empty($value['ACTION']) ? "include" : mb_strtolower($value['ACTION']);
+    function getAgent($item) {
+        $k = null;
+        foreach($item as $key => $value) {
+            if(in_array(mb_strtolower($key), ['agente', 'id do agente', 'id do avaliador'])) {
+                $k = $key;
+                break;
+            }
+        }
+
+        return $item[$k];
+    }
+
+    public function buildList($values, Opportunity $opportunity) {
+        $app = App::i();
+        
+        $data = [];
+
+        foreach($values as $item) {
+            $number = $this->getNumber($item);
+            $data[$number] = $data[$number] ?? [];
+            $data[$number][] = $this->getAgent($item);
+        }
+
+        foreach($data as $number => $valuers) {
+            /** @var Registration $registration */
+            $registration = $app->repo('Registration')->findOneBy(['opportunity' => $opportunity, 'number' => $number]);
+
+            $ids = implode(', ', $valuers);
+
+            $conn = $app->em->getConnection();
+            $users = $conn->fetchFirstColumn("SELECT user_id FROM agent WHERE id in ($ids)");
+
+            $registration->valuersExcludeList = [];
+            $registration->valuersIncludeList = array_map(function($item) { return "$item"; }, $users);
+            $registration->save(true);
+
+            $app->log->debug("Definindo avaliadores para a inscrição $number: $ids");
+
+            $app->em->clear();
+        }
     }
 
     public function getSpreadsheetData($spreadsheet)
@@ -138,9 +166,5 @@ class Plugin extends \MapasCulturais\Plugin
 
         $file_group_definition = new FileGroup('evalmaster', ['^text/csv$', '^application/vnd.ms-excel$', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], 'O arquivo enviado não é válido.', true, null, true);
         $app->registerFileGroup('opportunity', $file_group_definition);
-    }
-
-    public function registerTaxonomies()
-    {
     }
 }
