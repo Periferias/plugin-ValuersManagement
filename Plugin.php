@@ -59,7 +59,6 @@ class Plugin extends \MapasCulturais\Plugin
         }
 
         echo "<script>window.history.back();</script>";
-        die;
     }
 
     function getNumber($item) {
@@ -140,7 +139,6 @@ class Plugin extends \MapasCulturais\Plugin
                 continue;
             }
 
-
             $cellIterator = $row->getCellIterator();
             $cellIterator->setIterateOnlyExistingCells(false);
 
@@ -149,11 +147,15 @@ class Plugin extends \MapasCulturais\Plugin
             foreach ($cellIterator as $cell) {
                 $headerValue = $header[$columnIndex];
                 $cellValue = $cell->getValue();
-                $rowData[$headerValue] = $cellValue;
+                if($cellValue){
+                    $rowData[$headerValue] = $cellValue;
+                }
                 $columnIndex++;
             }
 
-            $data[] = $rowData;
+            if($rowData){
+                $data[] = $rowData;
+            }
         }
 
         return $data;
