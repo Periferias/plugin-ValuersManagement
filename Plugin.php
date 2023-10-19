@@ -31,6 +31,8 @@ class Plugin extends \MapasCulturais\Plugin
         });
 
         $app->hook('GET(opportunity.valuersmanagement)', function () use ($self, $app) {
+            ini_set('max_execution_time', '0');
+            
             /** @var ControllersOpportunity $this */
             $this->requireAuthentication();
             $opportunity = $app->repo('Opportunity')->find($this->data['entity']);
