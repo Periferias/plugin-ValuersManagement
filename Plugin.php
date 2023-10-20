@@ -99,7 +99,10 @@ class Plugin extends \MapasCulturais\Plugin
         }
 
         $_eval_users_id = [];
+        $n_total = count($data);
+        $n = 0;
         foreach($data as $number => $valuers) {
+            $n++;
             /** @var Registration $registration */
             $registration = $app->repo('Registration')->findOneBy(['opportunity' => $opportunity, 'number' => $number]);
 
@@ -111,7 +114,7 @@ class Plugin extends \MapasCulturais\Plugin
             foreach($users as $usr){
                 $_eval_users_id[] = $usr;
             }
-            
+
             $registration->__skipQueuingPCacheRecreation = true;
          
             $registration->valuersExcludeList = [];
@@ -119,7 +122,7 @@ class Plugin extends \MapasCulturais\Plugin
             
             $registration->save(true);
 
-            $app->log->debug("Definindo avaliadores para a inscrição $number: $ids");
+            $app->log->debug("({$n}/{$n_total}) Definindo avaliadores para a inscrição $number: $ids");
 
             $app->em->clear();
         }
