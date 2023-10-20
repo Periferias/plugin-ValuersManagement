@@ -111,12 +111,13 @@ class Plugin extends \MapasCulturais\Plugin
             foreach($users as $usr){
                 $_eval_users_id[] = $usr;
             }
+            
+            $registration->__skipQueuingPCacheRecreation = true;
          
             $registration->valuersExcludeList = [];
             $registration->valuersIncludeList = array_map(function($item) { return "$item"; }, $users);
             
             $registration->save(true);
-            $registration->__skipQueuingPCacheRecreation = true;
 
             $app->log->debug("Definindo avaliadores para a inscrição $number: $ids");
 
