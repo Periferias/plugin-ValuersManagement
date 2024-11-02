@@ -25,7 +25,7 @@ class Plugin extends \MapasCulturais\Plugin
 
         $self = $this;
 
-        $app->hook("template(opportunity.edit.committee):end", function () {
+        $app->hook("component(opportunity-phase-config-evaluation).evaluation-step-header:end", function () {
             $entity = $this->controller->requestedEntity;
             $this->part('evalmaster--upload', ['entity' => $entity]);
         });
