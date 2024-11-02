@@ -3,8 +3,9 @@ app.component('evalmaster-upload', {
     template: $TEMPLATES['evalmaster-upload'],
 
     setup(props) {
-        const text = Utils.getTexts('evalmaster-upload')
-        return { text }
+        const text = Utils.getTexts('evalmaster-upload');
+        const messages = useMessages();
+        return { text, messages }
     },
 
     props: {
@@ -16,6 +17,7 @@ app.component('evalmaster-upload', {
 
     data() {
         return {
+            hasFile: this.entity.opportunity.files['evalmaster'] ? true : false,
             newFile: {},
             loading: false,
             maxFileSize: $MAPAS.maxUploadSizeFormatted
@@ -28,10 +30,35 @@ app.component('evalmaster-upload', {
         },
         fileName() {
             return this.newFile.name ?? this.text('Selecione um arquivo');
-        }
+        },
+        entityFile() {
+            return this.entity.opportunity.files['evalmaster']
+        },
     },
 
     methods: {
+        processFile() {
+            let api = new API();
+
+            let args = {
+                entity: this.entity.opportunity.id,
+                file: this.entityFile.id
+            };
+
+            let url = Utils.createUrl('opportunity', 'valuersmanagement', args);
+
+            api.GET(url).then(res => res.json()).then(response => {
+                this.hasFile = false;
+                this.newFile = {};
+                this.messages.success(this.text('Arquivo processado com sucesso'));
+            });
+
+        },
+        deleteFile() {
+            this.entityFile.delete();
+            this.hasFile = false;
+            this.messages.success(this.text('Arquivo deletado com sucesso'));
+        },
         setFile() {
             this.newFile = this.$refs.file.files[0];
         },
@@ -46,10 +73,9 @@ app.component('evalmaster-upload', {
             this.entity.opportunity.upload(this.newFile, data).then((response) => {
                 this.newFile = {};
                 this.loading = false;
-                modal.close();
+                this.hasFile = true;
+                this.messages.success(this.text('Arquivo enviado com sucesso'));
             });
-
-            return true;
         },
     },
 });

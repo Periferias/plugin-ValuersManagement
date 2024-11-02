@@ -1,0 +1,48 @@
+@use '../2-atoms/a-mixins' as *;
+
+.evaluation-step__section-header {
+    flex-direction: row !important;
+
+    .valuers-management {
+        display: flex;
+
+        &__field {
+            align-items: center;
+            background: var(--mc-white-500);
+            border-radius: var(--mc-border-radius-xs);
+            border: size(1) solid var(--mc-gray-300);
+            gap: size(16);
+            justify-content: space-between;
+            margin-top: size(27);
+            padding: size(8) size(8) size(8) size(16); 
+    
+            input[type='file'] {
+                display: none
+            }
+    
+            .input-label {
+                align-items: center;
+                background-color: var(--mc-primary-500);
+                border-radius: var(--mc-border-radius-pill);
+                color: var(--mc-high-500);
+                cursor: pointer;
+                display: flex;
+                gap: size(16);
+                padding: size(8) size(16);
+                width: fit-content;
+            }
+        }
+
+        &__process {
+            .process__title {
+                margin-bottom: 30px;
+            }
+
+            .process__action {
+                display: flex;
+                gap: 10px;
+                flex-direction: row-reverse;
+            }
+        }
+    }
+}

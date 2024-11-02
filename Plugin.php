@@ -23,6 +23,8 @@ class Plugin extends \MapasCulturais\Plugin
     {
         $app = App::i();
 
+        $app->view->enqueueStyle('app-v2', 'ValuersManagement-v2', 'css/plugin-ValuersManagement.css');
+
         $self = $this;
 
         $app->hook("component(opportunity-phase-config-evaluation).evaluation-step-header:end", function () {
@@ -32,7 +34,6 @@ class Plugin extends \MapasCulturais\Plugin
 
         $app->hook('GET(opportunity.valuersmanagement)', function () use ($self, $app) {
             ini_set('max_execution_time', '0');
-            
             /** @var ControllersOpportunity $this */
             $this->requireAuthentication();
             $opportunity = $app->repo('Opportunity')->find($this->data['entity']);
@@ -43,7 +44,10 @@ class Plugin extends \MapasCulturais\Plugin
             $opportunity->checkPermission('@control');
 
             $request = $this->data;
-            $self->valuersmanagement($request);
+
+            if($self->valuersmanagement($request)) {
+                $this->json(true);
+            }
         });
     }
 
@@ -60,7 +64,7 @@ class Plugin extends \MapasCulturais\Plugin
             $file->delete(true);
         }
 
-        echo "<script>window.history.back();</script>";
+        return true;
     }
 
     function getNumber($item) {
