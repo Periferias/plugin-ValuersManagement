@@ -1,0 +1,88 @@
+[2025-07-29 18:28:31] [Hook] Requisição recebida: {"file":"83","entity":"1"}
+[2025-07-29 18:28:31] [INICIO] valuersmanagement - request: {"file":"83","entity":"1"}
+[2025-07-29 18:28:31] [OK] Arquivo encontrado: /app/var/private-files/opportunity/1/2-teste-distribuicao-ppv-35-2.xlsx
+[2025-07-29 18:28:31] [OK] Planilha carregada
+[2025-07-29 18:28:31] [getSpreadsheetData] Cabeçalho detectado: ["inscricao","id do avaliador"]
+[2025-07-29 18:28:31] [OK] Linhas extraídas: 6
+[2025-07-29 18:28:31] [INFO] Arquivo NÃO deletado (teste)
+[2025-07-29 18:28:31] [buildList] Iniciado com 6 linhas.
+[2025-07-29 18:28:31] [buildList] Processando linha 0: {"inscricao":"on-561465857","id do avaliador":18}
+[2025-07-29 18:28:31] [buildList] Agent ID: 18, User ID: 4, Comissão: 
+[2025-07-29 18:28:31] [buildList] Avaliação criada para user_id 4.
+[2025-07-29 18:28:31] [buildList] Processando linha 1: {"inscricao":"on-561465857","id do avaliador":50}
+[2025-07-29 18:28:31] [buildList] Agent ID: 50, User ID: 5, Comissão: 
+[2025-07-29 18:28:31] [buildList] Avaliação criada para user_id 5.
+[2025-07-29 18:28:31] [buildList] Processando linha 2: {"inscricao":"on-561465857","id do avaliador":88}
+[2025-07-29 18:28:31] [buildList] Agent ID: 88, User ID: 6, Comissão: 
+[2025-07-29 18:28:31] [buildList] Avaliação criada para user_id 6.
+[2025-07-29 18:28:31] [buildList] Processando linha 3: {"inscricao":"on-561465857","id do avaliador":118}
+[2025-07-29 18:28:31] [buildList] Agent ID: 118, User ID: 7, Comissão: 
+[2025-07-29 18:28:31] [buildList] Avaliação criada para user_id 7.
+[2025-07-29 18:28:31] [buildList] Processando linha 4: {"inscricao":"on-561465857","id do avaliador":163}
+[2025-07-29 18:28:31] [buildList] Agent ID: 163, User ID: 8, Comissão: 
+[2025-07-29 18:28:31] [buildList] Avaliação criada para user_id 8.
+[2025-07-29 18:28:31] [buildList] Processando linha 5: {"inscricao":"on-561465857","id do avaliador":7}
+[2025-07-29 18:28:31] [buildList] Agent ID: 7, User ID: 2, Comissão: 
+[2025-07-29 18:28:31] [buildList] Avaliação criada para user_id 2.
+[2025-07-29 18:28:31] [buildList] Finalizado
+[2025-07-29 18:28:31] [OK] buildList executado
+[2025-07-29 18:28:31] [FIM] valuersmanagement
+[2025-07-29 18:42:02] [Hook] Requisição recebida: {"file":"84","entity":"1"}
+[2025-07-29 18:42:02] [INICIO] valuersmanagement - request: {"file":"84","entity":"1"}
+[2025-07-29 18:42:02] [OK] Arquivo encontrado: /app/var/private-files/opportunity/1/2-teste-distribuicao-ppv-35.xlsx
+[2025-07-29 18:42:02] [OK] Planilha carregada
+[2025-07-29 18:42:02] [getSpreadsheetData] Cabeçalho detectado: ["inscricao","id do avaliador"]
+[2025-07-29 18:42:02] [OK] Linhas extraídas: 6
+[2025-07-29 18:42:02] [INFO] Arquivo NÃO deletado (teste)
+[2025-07-29 18:42:02] [buildList] Iniciado com 6 linhas.
+[2025-07-29 18:42:02] [buildList] Comissão padrão: Geral
+[2025-07-29 18:42:02] [buildList] Processando linha 0: {"inscricao":"on-561465857","id do avaliador":18}
+[2025-07-29 18:42:02] [buildList] Agent ID: 18, User ID obtido: 4
+[2025-07-29 18:42:02] [buildList] Avaliação criada para user_id 4 com comissão 'Geral'.
+[2025-07-29 18:42:02] [buildList] Processando linha 1: {"inscricao":"on-561465857","id do avaliador":50}
+[2025-07-29 18:42:02] [buildList] Agent ID: 50, User ID obtido: 5
+[2025-07-29 18:42:02] [buildList] Avaliação criada para user_id 5 com comissão 'Geral'.
+[2025-07-29 18:42:02] [buildList] Processando linha 2: {"inscricao":"on-561465857","id do avaliador":88}
+[2025-07-29 18:42:02] [buildList] Agent ID: 88, User ID obtido: 6
+[2025-07-29 18:42:02] [buildList] Avaliação criada para user_id 6 com comissão 'Geral'.
+[2025-07-29 18:42:02] [buildList] Processando linha 3: {"inscricao":"on-561465857","id do avaliador":118}
+[2025-07-29 18:42:02] [buildList] Agent ID: 118, User ID obtido: 7
+[2025-07-29 18:42:02] [buildList] Avaliação criada para user_id 7 com comissão 'Geral'.
+[2025-07-29 18:42:02] [buildList] Processando linha 4: {"inscricao":"on-561465857","id do avaliador":163}
+[2025-07-29 18:42:02] [buildList] Agent ID: 163, User ID obtido: 8
+[2025-07-29 18:42:02] [buildList] Avaliação criada para user_id 8 com comissão 'Geral'.
+[2025-07-29 18:42:02] [buildList] Processando linha 5: {"inscricao":"on-561465857","id do avaliador":7}
+[2025-07-29 18:42:02] [buildList] Agent ID: 7, User ID obtido: 2
+[2025-07-29 18:42:02] [buildList] Avaliação criada para user_id 2 com comissão 'Geral'.
+[2025-07-29 18:42:02] [buildList] Finalizado
+[2025-07-29 18:42:02] [OK] buildList executado
+[2025-07-29 18:42:02] [FIM] valuersmanagement
+[2025-07-29 18:59:20] [Hook] Requisição recebida: {"file":"85","entity":"1"}
+[2025-07-29 18:59:20] [INICIO] valuersmanagement - request: {"file":"85","entity":"1"}
+[2025-07-29 18:59:20] [OK] Arquivo encontrado: /app/var/private-files/opportunity/1/2-teste-distribuicao-ppv-35.xlsx
+[2025-07-29 18:59:20] [OK] Planilha carregada
+[2025-07-29 18:59:20] [getSpreadsheetData] Cabeçalho detectado: ["inscricao","id do avaliador"]
+[2025-07-29 18:59:20] [OK] Linhas extraídas: 6
+[2025-07-29 18:59:20] [INFO] Arquivo NÃO deletado (teste)
+[2025-07-29 18:59:20] [buildList] Iniciado com 6 linhas.
+[2025-07-29 18:59:20] [buildList] Processando linha 0: {"inscricao":"on-561465857","id do avaliador":18}
+[2025-07-29 18:59:20] [buildList] Agent ID: 18, User ID: 4, Comissão: Comissão de avaliação
+[2025-07-29 18:59:20] [buildList] Avaliação criada para user_id 4.
+[2025-07-29 18:59:20] [buildList] Processando linha 1: {"inscricao":"on-561465857","id do avaliador":50}
+[2025-07-29 18:59:20] [buildList] Agent ID: 50, User ID: 5, Comissão: Comissão de avaliação
+[2025-07-29 18:59:20] [buildList] Avaliação criada para user_id 5.
+[2025-07-29 18:59:20] [buildList] Processando linha 2: {"inscricao":"on-561465857","id do avaliador":88}
+[2025-07-29 18:59:20] [buildList] Agent ID: 88, User ID: 6, Comissão: Comissão de avaliação
+[2025-07-29 18:59:20] [buildList] Avaliação criada para user_id 6.
+[2025-07-29 18:59:20] [buildList] Processando linha 3: {"inscricao":"on-561465857","id do avaliador":118}
+[2025-07-29 18:59:20] [buildList] Agent ID: 118, User ID: 7, Comissão: Comissão de avaliação
+[2025-07-29 18:59:20] [buildList] Avaliação criada para user_id 7.
+[2025-07-29 18:59:20] [buildList] Processando linha 4: {"inscricao":"on-561465857","id do avaliador":163}
+[2025-07-29 18:59:20] [buildList] Agent ID: 163, User ID: 8, Comissão: Comissão de avaliação
+[2025-07-29 18:59:20] [buildList] Avaliação criada para user_id 8.
+[2025-07-29 18:59:20] [buildList] Processando linha 5: {"inscricao":"on-561465857","id do avaliador":7}
+[2025-07-29 18:59:20] [buildList] Agent ID: 7, User ID: 2, Comissão: Comissão de avaliação
+[2025-07-29 18:59:20] [buildList] Avaliação criada para user_id 2.
+[2025-07-29 18:59:20] [buildList] Finalizado
+[2025-07-29 18:59:20] [OK] buildList executado
+[2025-07-29 18:59:20] [FIM] valuersmanagement
