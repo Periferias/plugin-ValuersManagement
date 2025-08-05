@@ -131,7 +131,7 @@ class Plugin extends \MapasCulturais\Plugin
 
                     $this->pluginLog("[buildList] Agent ID: $agentId, User ID: $userId, Comissão: $committee");
 
-                    // Linha alterada: removido 'committee' da consulta de busca
+                    // Linha alterada: removido 'committee' da consulta de busca.
                     $existingEval = $app->repo('RegistrationEvaluation')->findOneBy([
                         'registration' => $registration,
                         'user' => $app->repo('User')->find($userId),
