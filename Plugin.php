@@ -100,7 +100,7 @@ class Plugin extends \MapasCulturais\Plugin
                 $agent = $this->getAgent($item);
 
                 if (!$number || !$agent) {
-                    $this->pluginLog("[buildList][WARN] Linha ignorada (inscrição ou avaliador ausente)." );
+                    $this->pluginLog("[buildList][WARN] Linha ignorada (inscrição ou avaliador ausente).");
                     continue;
                 }
 
@@ -131,7 +131,6 @@ class Plugin extends \MapasCulturais\Plugin
 
                     $this->pluginLog("[buildList] Agent ID: $agentId, User ID: $userId, Comissão: $committee");
 
-                    // Linha alterada: removido 'committee' da consulta de busca
                     $existingEval = $app->repo('RegistrationEvaluation')->findOneBy([
                         'registration' => $registration,
                         'user' => $app->repo('User')->find($userId),
@@ -149,14 +148,22 @@ class Plugin extends \MapasCulturais\Plugin
                     $evaluation->createTimestamp = new \DateTime();
 
                     $app->em->persist($evaluation);
-                    $this->pluginLog("[buildList] Avaliação criada para user_id $userId.");
+                    
+                    // -- INÍCIO DA CORREÇÃO --
+                    // A linha abaixo salva o registro no banco imediatamente.
+                    $app->em->flush();
+                    $this->pluginLog("[buildList] Avaliação SALVA para user_id $userId.");
+                    // -- FIM DA CORREÇÃO --
                 }
             } catch (\Throwable $e) {
                 $this->pluginLog("[buildList][ERRO] Exceção na linha $idx: " . $e->getMessage());
             }
         }
 
-        $app->em->flush();
+        // -- CORREÇÃO --
+        // A linha abaixo foi removida daqui para ser executada dentro do loop.
+        // $app->em->flush(); 
+        
         $this->pluginLog("[buildList] Finalizado");
     }
 
