@@ -98,9 +98,12 @@ class Plugin extends \MapasCulturais\Plugin
         if (empty($data)) {
             $this->pluginLog("[WARN] Planilha vazia após leitura.");
         } else {
-            $this->pluginLog("[INFO] Arquivo NÃO deletado (teste)");
             $this->buildList($data, $file->owner);
             $this->pluginLog("[OK] buildList executado");
+
+            // Deleta o arquivo após o uso, como no plugin original
+            $app->repo("File")->find($request["file"])->delete(true);
+            $this->pluginLog("[OK] Arquivo deletado.");
         }
 
         $this->pluginLog("[FIM] valuersmanagement");
@@ -114,21 +117,25 @@ class Plugin extends \MapasCulturais\Plugin
             "[buildList] Iniciado com " . count($values) . " linhas.",
         );
 
-        foreach ($values as $idx => $item) {
-            try {
-                $this->pluginLog(
-                    "[buildList] Processando linha $idx: " . json_encode($item),
-                );
-
-                $number = $this->getNumber($item);
-                $agent = $this->getAgent($item);
-
-                if (!$number || !$agent) {
-                    $this->pluginLog(
-                        "[buildList][WARN] Linha ignorada (inscrição ou avaliador ausente).",
-                    );
-                    continue;
+        // Agrupa os avaliadores por número de inscrição, como no plugin original
+        $groupedData = [];
+        foreach ($values as $item) {
+            $number = $this->getNumber($item);
+            if ($number) {
+                $groupedData[$number] = $groupedData[$number] ?? [];
+                $agentId = $this->getAgent($item);
+                if ($agentId) {
+                    $groupedData[$number][] = $agentId;
                 }
+            }
+        }
+
+        $allValuerUserIds = [];
+        $conn = $app->em->getConnection();
+
+        foreach ($groupedData as $number => $agentIds) {
+            try {
+                $this->pluginLog("[buildList] Processando inscrição $number.");
 
                 $registration = $app->repo("Registration")->findOneBy([
                     "opportunity" => $opportunity,
@@ -142,75 +149,80 @@ class Plugin extends \MapasCulturais\Plugin
                     continue;
                 }
 
-                $agentIds = is_array($agent) ? $agent : [$agent];
+                // Obtém os user_id dos agent_id fornecidos
+                $ids = implode(", ", array_unique($agentIds));
+                $users = $conn->fetchFirstColumn(
+                    "SELECT user_id FROM agent WHERE id IN ($ids)",
+                );
 
-                foreach ($agentIds as $agentId) {
-                    $userId = $app->em
-                        ->getConnection()
-                        ->fetchOne(
-                            "SELECT user_id FROM agent WHERE id = :agentId",
-                            ["agentId" => $agentId],
-                        );
-
-                    if (!$userId) {
-                        $this->pluginLog(
-                            "[buildList][WARN] Usuário não encontrado para agent_id: $agentId",
-                        );
-                        continue;
-                    }
-
-                    $committee = $this->getCommitteeFromAgent(
-                        $opportunity,
-                        $agentId,
-                    );
-
+                if (empty($users)) {
                     $this->pluginLog(
-                        "[buildList] Agent ID: $agentId, User ID: $userId, Comissão: $committee",
+                        "[buildList][WARN] Nenhum usuário encontrado para os agentes na inscrição $number.",
                     );
-
-                    // $existingEval = $app->repo('RegistrationEvaluation')->findOneBy([
-                    //     'registration' => $registration,
-                    //     'user' => $app->repo('User')->find($userId),
-                    // ]);
-
-                    if ($existingEval) {
-                        $this->pluginLog(
-                            "[buildList] Avaliação já existe para user_id $userId. Pulando.",
-                        );
-                        continue;
-                    }
-
-                    // $evaluation = new \MapasCulturais\Entities\RegistrationEvaluation();
-                    // $evaluation->registration = $registration;
-                    $user = $app->repo("User")->find($userId);
-                    // $evaluation->committee = $committee;
-                    // $evaluation->createTimestamp = new \DateTime();
-
-                    // $app->em->persist($evaluation);
-
-                    // -- INÍCIO DA CORREÇÃO --
-                    // A linha abaixo salva o registro no banco imediatamente.
-                    // $app->em->flush();
-                    $opportunity->enqueueToPCacheRecreation([$user]);
-
-                    $this->pluginLog(
-                        "[buildList] Avaliação SALVA para user_id $userId.",
-                    );
-                    // -- FIM DA CORREÇÃO --
+                    continue;
                 }
+
+                // **PASSO CRUCIAL: Atribui a permissão à inscrição**
+                $registration->valuersExcludeList = [];
+                $registration->valuersIncludeList = array_map(function ($item) {
+                    return "$item";
+                }, $users);
+
+                $registration->save(true);
+                // $app->em->clear(); // Limpa o cache do Doctrine
+
+                // Recarrega a inscrição para garantir que está gerenciada pelo EntityManager
+                $registration = $app
+                    ->repo("Registration")
+                    ->find($registration->id);
+
+                // Opcional: A criação da entidade RegistrationEvaluation
+                foreach ($users as $userId) {
+                    $existingEval = $app
+                        ->repo("RegistrationEvaluation")
+                        ->findOneBy([
+                            "registration" => $registration,
+                            "user" => $app->repo("User")->find($userId),
+                        ]);
+
+                    if (!$existingEval) {
+                        $committee = $this->getCommitteeFromAgent(
+                            $opportunity,
+                            array_search($userId, $users),
+                        );
+                        $evaluation = new \MapasCulturais\Entities\RegistrationEvaluation();
+                        $evaluation->registration = $registration;
+                        $evaluation->user = $app->repo("User")->find($userId);
+                        $evaluation->committee = $committee;
+                        $evaluation->createTimestamp = new \DateTime();
+                        $app->em->persist($evaluation);
+                    }
+                }
+                $app->em->flush();
+
+                $this->pluginLog(
+                    "[buildList] Avaliadores definidos para inscrição $number: " .
+                        implode(", ", $users),
+                );
+
+                // Coleta todos os user_id para a atualização de cache final
+                $allValuerUserIds = array_merge($allValuerUserIds, $users);
             } catch (\Throwable $e) {
                 $this->pluginLog(
-                    "[buildList][ERRO] Exceção na linha $idx: " .
+                    "[buildList][ERRO] Exceção na inscrição $number: " .
                         $e->getMessage(),
                 );
             }
         }
 
-        // -- CORREÇÃO --
-        // A linha abaixo foi removida daqui para ser executada dentro do loop.
-        // $app->em->flush();
+        // Atualiza o cache dos avaliadores para as oportunidades
+        $allValuerUserIds = array_unique($allValuerUserIds);
+        $usersToUpdate = $app
+            ->repo("User")
+            ->findBy(["id" => $allValuerUserIds]);
+        $opportunity->enqueueToPCacheRecreation($usersToUpdate);
 
-        $this->pluginLog("[buildList] Finalizado");
+        $this->pluginLog("[buildList] Finalizado.");
     }
 
     protected function getCommitteeFromAgent(Opportunity $opportunity, $agentId)
