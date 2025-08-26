@@ -12,45 +12,29 @@ class Plugin extends \MapasCulturais\Plugin
     {
         $app = App::i();
 
-        $app->view->enqueueStyle(
-            "app-v2",
-            "ValuersManagement-v2",
-            "css/plugin-ValuersManagement.css",
-        );
+        $app->view->enqueueStyle('app-v2', 'ValuersManagement-v2', 'css/plugin-ValuersManagement.css');
 
         $self = $this;
 
-        $app->hook(
-            "component(opportunity-phase-config-evaluation).evaluation-step-header:end",
-            function () {
-                $entity = $this->controller->requestedEntity;
-                $this->part("evalmaster--upload", ["entity" => $entity]);
-            },
-        );
+        $app->hook("component(opportunity-phase-config-evaluation).evaluation-step-header:end", function () {
+            $entity = $this->controller->requestedEntity;
+            $this->part('evalmaster--upload', ['entity' => $entity]);
+        });
 
-        $app->hook("GET(opportunity.valuersmanagement)", function () use (
-            $self,
-            $app,
-        ) {
-            ini_set("max_execution_time", "0");
+        $app->hook('GET(opportunity.valuersmanagement)', function () use ($self, $app) {
+            ini_set('max_execution_time', '0');
             $this->requireAuthentication();
 
-            $opportunity = $app
-                ->repo("Opportunity")
-                ->find($this->data["entity"]);
+            $opportunity = $app->repo('Opportunity')->find($this->data['entity']);
             if (!$opportunity) {
-                $app->log->error(
-                    "[ValuersManagement] Oportunidade não encontrada",
-                );
+                $app->log->error('[ValuersManagement] Oportunidade não encontrada');
                 $app->pass();
             }
 
-            $opportunity->checkPermission("@control");
+            $opportunity->checkPermission('@control');
 
             $request = $this->data;
-            $self->pluginLog(
-                "[Hook] Requisição recebida: " . json_encode($request),
-            );
+            $self->pluginLog("[Hook] Requisição recebida: " . json_encode($request));
 
             if ($self->valuersmanagement($request)) {
                 $this->json(true);
@@ -60,13 +44,13 @@ class Plugin extends \MapasCulturais\Plugin
 
     protected function pluginLog(string $message)
     {
-        $logDir = __DIR__ . "/logs";
+        $logDir = __DIR__ . '/logs';
         if (!is_dir($logDir)) {
             mkdir($logDir, 0777, true);
         }
 
-        $logFile = $logDir . "/valuersmanagement.log";
-        $date = date("Y-m-d H:i:s");
+        $logFile = $logDir . '/valuersmanagement.log';
+        $date = date('Y-m-d H:i:s');
         $formattedMessage = "[$date] $message" . PHP_EOL;
 
         file_put_contents($logFile, $formattedMessage, FILE_APPEND);
@@ -75,15 +59,11 @@ class Plugin extends \MapasCulturais\Plugin
     public function valuersmanagement($request)
     {
         $app = App::i();
-        $this->pluginLog(
-            "[INICIO] valuersmanagement - request: " . json_encode($request),
-        );
+        $this->pluginLog("[INICIO] valuersmanagement - request: " . json_encode($request));
 
-        $file = $app->repo("File")->find($request["file"]);
+        $file = $app->repo("File")->find($request['file']);
         if (!$file) {
-            $this->pluginLog(
-                "[ERRO] Arquivo não encontrado: ID " . $request["file"],
-            );
+            $this->pluginLog("[ERRO] Arquivo não encontrado: ID " . $request['file']);
             return true;
         }
 
@@ -113,9 +93,7 @@ class Plugin extends \MapasCulturais\Plugin
     public function buildList($values, Opportunity $opportunity)
     {
         $app = App::i();
-        $this->pluginLog(
-            "[buildList] Iniciado com " . count($values) . " linhas.",
-        );
+        $this->pluginLog("[buildList] Iniciado com " . count($values) . " linhas.");
 
         // Agrupa os avaliadores por número de inscrição, como no plugin original
         $groupedData = [];
@@ -126,20 +104,6 @@ class Plugin extends \MapasCulturais\Plugin
                 $agentId = $this->getAgent($item);
                 if ($agentId) {
                     $groupedData[$number][] = $agentId;
-        foreach ($values as $idx => $item) {
-            try {
-                $this->pluginLog(
-                    "[buildList] Processando linha $idx: " . json_encode($item),
-                );
-
-                $number = $this->getNumber($item);
-                $agent = $this->getAgent($item);
-
-                if (!$number || !$agent) {
-                    $this->pluginLog(
-                        "[buildList][WARN] Linha ignorada (inscrição ou avaliador ausente).",
-                    );
-                    continue;
                 }
             }
         }
@@ -151,15 +115,13 @@ class Plugin extends \MapasCulturais\Plugin
             try {
                 $this->pluginLog("[buildList] Processando inscrição $number.");
 
-                $registration = $app->repo("Registration")->findOneBy([
-                    "opportunity" => $opportunity,
-                    "number" => $number,
+                $registration = $app->repo('Registration')->findOneBy([
+                    'opportunity' => $opportunity,
+                    'number' => $number
                 ]);
 
                 if (!$registration) {
-                    $this->pluginLog(
-                        "[buildList][WARN] Inscrição $number não encontrada.",
-                    );
+                    $this->pluginLog("[buildList][WARN] Inscrição $number não encontrada.");
                     continue;
                 }
 
@@ -179,7 +141,7 @@ class Plugin extends \MapasCulturais\Plugin
                 $registration->save(true);
                 $app->em->clear(); // Limpa o cache do Doctrine
 
-                // criação da entidade RegistrationEvaluation
+                // Opcional: A criação da entidade RegistrationEvaluation
                 foreach ($users as $userId) {
                     $existingEval = $app->repo('RegistrationEvaluation')->findOneBy([
                         'registration' => $registration,
@@ -195,60 +157,6 @@ class Plugin extends \MapasCulturais\Plugin
                         $evaluation->createTimestamp = new \DateTime();
                         $app->em->persist($evaluation);
                     }
-                foreach ($agentIds as $agentId) {
-                    $userId = $app->em
-                        ->getConnection()
-                        ->fetchOne(
-                            "SELECT user_id FROM agent WHERE id = :agentId",
-                            ["agentId" => $agentId],
-                        );
-
-                    if (!$userId) {
-                        $this->pluginLog(
-                            "[buildList][WARN] Usuário não encontrado para agent_id: $agentId",
-                        );
-                        continue;
-                    }
-
-                    $committee = $this->getCommitteeFromAgent(
-                        $opportunity,
-                        $agentId,
-                    );
-
-                    $this->pluginLog(
-                        "[buildList] Agent ID: $agentId, User ID: $userId, Comissão: $committee",
-                    );
-
-                    // $existingEval = $app->repo('RegistrationEvaluation')->findOneBy([
-                    //     'registration' => $registration,
-                    //     'user' => $app->repo('User')->find($userId),
-                    // ]);
-
-                    if ($existingEval) {
-                        $this->pluginLog(
-                            "[buildList] Avaliação já existe para user_id $userId. Pulando.",
-                        );
-                        continue;
-                    }
-
-                    // $evaluation = new \MapasCulturais\Entities\RegistrationEvaluation();
-                    // $evaluation->registration = $registration;
-                    $user = $app->repo("User")->find($userId);
-                    // $evaluation->committee = $committee;
-                    // $evaluation->createTimestamp = new \DateTime();
-
-                    // $app->em->persist($evaluation);
-
-                    // -- INÍCIO DA CORREÇÃO --
-                    // A linha abaixo salva o registro no banco imediatamente.
-                    // $app->em->flush();
-                    $opportunity->enqueueToPCacheRecreation([$user]);
-
-                    $this->pluginLog(
-                        "[buildList] Avaliação SALVA para user_id $userId.",
-                    );
-                    // -- FIM DA CORREÇÃO --
-
                 }
                 $app->em->flush();
                 
@@ -258,60 +166,39 @@ class Plugin extends \MapasCulturais\Plugin
                 $allValuerUserIds = array_merge($allValuerUserIds, $users);
 
             } catch (\Throwable $e) {
-
                 $this->pluginLog("[buildList][ERRO] Exceção na inscrição $number: " . $e->getMessage());
-
-                $this->pluginLog(
-                    "[buildList][ERRO] Exceção na linha $idx: " .
-                        $e->getMessage(),
-                );
-
             }
         }
         
-        // Atualiza o cache dos avaliadores para a oportunidade
+        // Atualiza o cache dos avaliadores para as oportunidades
         $allValuerUserIds = array_unique($allValuerUserIds);
         $usersToUpdate = $app->repo('User')->findBy(['id' => $allValuerUserIds]);
         $opportunity->enqueueToPCacheRecreation($usersToUpdate);
 
-
         $this->pluginLog("[buildList] Finalizado.");
-
-        // -- CORREÇÃO --
-        // A linha abaixo foi removida daqui para ser executada dentro do loop.
-        // $app->em->flush();
-
-        $this->pluginLog("[buildList] Finalizado");
-
     }
 
     protected function getCommitteeFromAgent(Opportunity $opportunity, $agentId)
     {
         $app = App::i();
 
-        $emc = $app
-            ->repo("EvaluationMethodConfiguration")
-            ->findOneBy(["opportunity" => $opportunity]);
+        $emc = $app->repo('EvaluationMethodConfiguration')->findOneBy(['opportunity' => $opportunity]);
 
         if (!$emc) {
-            $this->pluginLog(
-                "[getCommitteeFromAgent] Configuração de avaliação não encontrada.",
-            );
+            $this->pluginLog("[getCommitteeFromAgent] Configuração de avaliação não encontrada.");
             return null;
         }
 
-        $result = $app->em
-            ->getConnection()
-            ->fetchAssociative(
-                "SELECT type FROM agent_relation WHERE object_type = 'MapasCulturais\\Entities\\EvaluationMethodConfiguration' AND object_id = :objectId AND agent_id = :agentId",
-                [
-                    "objectId" => $emc->id,
-                    "agentId" => $agentId,
-                ],
-            );
+        $result = $app->em->getConnection()->fetchAssociative(
+            "SELECT type FROM agent_relation WHERE object_type = 'MapasCulturais\\Entities\\EvaluationMethodConfiguration' AND object_id = :objectId AND agent_id = :agentId",
+            [
+                'objectId' => $emc->id,
+                'agentId' => $agentId
+            ]
+        );
 
-        if ($result && isset($result["type"])) {
-            return $result["type"];
+        if ($result && isset($result['type'])) {
+            return $result['type'];
         }
 
         return null;
@@ -320,14 +207,7 @@ class Plugin extends \MapasCulturais\Plugin
     function getNumber($item)
     {
         foreach ($item as $key => $value) {
-            if (
-                in_array(mb_strtolower($key), [
-                    "inscrição",
-                    "inscricao",
-                    "number",
-                    "número",
-                ])
-            ) {
+            if (in_array(mb_strtolower($key), ['inscrição', 'inscricao', 'number', 'número'])) {
                 return $value;
             }
         }
@@ -337,13 +217,7 @@ class Plugin extends \MapasCulturais\Plugin
     function getAgent($item)
     {
         foreach ($item as $key => $value) {
-            if (
-                in_array(mb_strtolower($key), [
-                    "agente",
-                    "id do agente",
-                    "id do avaliador",
-                ])
-            ) {
+            if (in_array(mb_strtolower($key), ['agente', 'id do agente', 'id do avaliador'])) {
                 return $value;
             }
         }
@@ -360,10 +234,7 @@ class Plugin extends \MapasCulturais\Plugin
         foreach ($worksheet->getRowIterator() as $row) {
             if ($firstRow) {
                 $header = $this->getSpreadsheetHeader($row);
-                $this->pluginLog(
-                    "[getSpreadsheetData] Cabeçalho detectado: " .
-                        json_encode($header),
-                );
+                $this->pluginLog("[getSpreadsheetData] Cabeçalho detectado: " . json_encode($header));
                 $firstRow = false;
                 continue;
             }
@@ -376,7 +247,7 @@ class Plugin extends \MapasCulturais\Plugin
             foreach ($cellIterator as $cell) {
                 $headerValue = $header[$columnIndex] ?? "col$columnIndex";
                 $cellValue = $cell->getValue();
-                if ($cellValue !== null && $cellValue !== "") {
+                if ($cellValue !== null && $cellValue !== '') {
                     $rowData[$headerValue] = $cellValue;
                 }
                 $columnIndex++;
@@ -407,17 +278,13 @@ class Plugin extends \MapasCulturais\Plugin
     {
         $app = App::i();
         $file_group_definition = new \MapasCulturais\Definitions\FileGroup(
-            "evalmaster",
-            [
-                '^text/csv$',
-                '^application/vnd.ms-excel$',
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            ],
-            "O arquivo enviado não é válido.",
+            'evalmaster',
+            ['^text/csv$', '^application/vnd.ms-excel$', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+            'O arquivo enviado não é válido.',
             true,
             null,
-            true,
+            true
         );
-        $app->registerFileGroup("opportunity", $file_group_definition);
+        $app->registerFileGroup('opportunity', $file_group_definition);
     }
 }
