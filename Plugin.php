@@ -139,7 +139,10 @@ class Plugin extends \MapasCulturais\Plugin
                 $registration->valuersIncludeList = array_map(function($item) { return "$item"; }, $users);
                 
                 $registration->save(true);
-                $app->em->clear(); // Limpa o cache do Doctrine
+                // $app->em->clear(); // Limpa o cache do Doctrine
+
+                // Recarrega a inscrição para garantir que está gerenciada pelo EntityManager
+                $registration = $app->repo('Registration')->find($registration->id);
 
                 // Opcional: A criação da entidade RegistrationEvaluation
                 foreach ($users as $userId) {
