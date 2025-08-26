@@ -131,27 +131,29 @@ class Plugin extends \MapasCulturais\Plugin
 
                     $this->pluginLog("[buildList] Agent ID: $agentId, User ID: $userId, Comissão: $committee");
 
-                    $existingEval = $app->repo('RegistrationEvaluation')->findOneBy([
-                        'registration' => $registration,
-                        'user' => $app->repo('User')->find($userId),
-                    ]);
+                    // $existingEval = $app->repo('RegistrationEvaluation')->findOneBy([
+                    //     'registration' => $registration,
+                    //     'user' => $app->repo('User')->find($userId),
+                    // ]);
 
                     if ($existingEval) {
                         $this->pluginLog("[buildList] Avaliação já existe para user_id $userId. Pulando.");
                         continue;
                     }
 
-                    $evaluation = new \MapasCulturais\Entities\RegistrationEvaluation();
-                    $evaluation->registration = $registration;
-                    $evaluation->user = $app->repo('User')->find($userId);
-                    $evaluation->committee = $committee;
-                    $evaluation->createTimestamp = new \DateTime();
+                    // $evaluation = new \MapasCulturais\Entities\RegistrationEvaluation();
+                    // $evaluation->registration = $registration;
+                    $user = $app->repo('User')->find($userId);
+                    // $evaluation->committee = $committee;
+                    // $evaluation->createTimestamp = new \DateTime();
 
-                    $app->em->persist($evaluation);
+                    // $app->em->persist($evaluation);
                     
                     // -- INÍCIO DA CORREÇÃO --
                     // A linha abaixo salva o registro no banco imediatamente.
-                    $app->em->flush();
+                    // $app->em->flush();
+                    $opportunity->enqueueToPCacheRecreation($user);
+
                     $this->pluginLog("[buildList] Avaliação SALVA para user_id $userId.");
                     // -- FIM DA CORREÇÃO --
                 }
